@@ -1,17 +1,42 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import React, { useState } from "react";
+import { AsyncPaginate } from "react-select-async-paginate";
+import { geoApiOptions, GEO_API_URL } from "../../api";
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+const Search = ({ onSearchChange }) => {
+  const [search, setSearch] = useState(null);
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+  const loadOptions = (inputValue) => {
+    return fetch(
+      `${GEO_API_URL}/cities?minPopulation=1000000&namePrefix=${inputValue}`,
+      geoApiOptions
+    )
+      .then((response) => response.json())
+      .then((response) => {
+        return {
+          options: response.data.map((city) => {
+            return {
+              value: `${city.latitude} ${city.longitude}`,
+              label: `${city.name}, ${city.countryCode}`,
+            };
+          }),
+        };
+      });
+  };
+
+  const handleOnChange = (searchData) => {
+    setSearch(searchData);
+    onSearchChange(searchData);
+  };
+
+  return (
+    <AsyncPaginate
+      placeholder="Search for city"
+      debounceTimeout={600}
+      value={search}
+      onChange={handleOnChange}
+      loadOptions={loadOptions}
+    />
+  );
+};
+
+export default Search;
